@@ -3,638 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLife: The Mega-Build</title>
+    <title>BitClone Life Simulator</title>
     <style>
         :root {
-            --bg-primary: #0d0d0f; --bg-surface: #1a1a20; --text-main: #f5f5f7;
-            --accent: #0a84ff; --border-color: #2c2c35; --success: #30d158;
-            --danger: #ff453a; --warning: #ffd60a; --panel-bg: #22222a;
+            --bg-color: #f2f2f7;
+            --text-color: #1c1c1e;
+            --header-bg: #ffffff;
+            --primary: #34c759;
+            --danger: #ff3b30;
+            --warning: #ffcc00;
+            --intel: #007aff;
+            --border: #e5e5ea;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        
-        #game-container { display: grid; grid-template-columns: 380px 1fr; width: 100vw; height: 100vh; }
-        
-        aside { background: var(--bg-surface); border-right: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
-        
-        #portrait-container { width: 130px; height: 130px; margin: 0 auto; background: #2a2a32; border-radius: 50%; border: 3px solid var(--accent); overflow: hidden; position: relative; }
-        .player-profile { text-align: center; }
-        .player-profile h2 { margin: 10px 0 5px; font-size: 22px; }
-        .player-profile p { margin: 0; color: #a1a1aa; font-size: 14px; font-weight: 600; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-group { font-size: 12px; font-weight: bold; }
-        .progress-bar { background: #2c2c35; border-radius: 4px; height: 8px; width: 100%; margin-top: 4px; overflow: hidden; }
-        .fill { height: 100%; transition: width 0.3s ease, background 0.3s; }
+        /* Mobile Phone Simulator Container */
+        #mobile-container {
+            width: 400px;
+            height: 850px;
+            background-color: var(--bg-color);
+            border-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #111;
+        }
 
-        #action-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .menu-btn { background: var(--panel-bg); color: white; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-align: left; transition: 0.2s; }
-        .menu-btn:hover { background: #3a3a45; border-color: var(--accent); }
+        /* Top Header */
+        header {
+            background-color: var(--header-bg);
+            padding: 20px 20px 10px 20px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            z-index: 10;
+        }
+        #player-name { font-size: 22px; font-weight: 800; margin: 0 0 5px 0; }
+        #player-finances { font-size: 16px; color: #34c759; font-weight: 600; margin: 0; }
 
-        #btn-age-up { margin-top: auto; background: var(--success); color: #000; font-size: 20px; font-weight: 900; border: none; padding: 18px; border-radius: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(48, 209, 88, 0.3); }
-        #btn-age-up:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(48, 209, 88, 0.5); }
-        #btn-age-up:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; }
+        /* The Main Life Log */
+        #life-log {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: var(--bg-color);
+        }
 
-        main { padding: 30px; display: flex; flex-direction: column; gap: 20px; height: 100vh; box-sizing: border-box; overflow-y: hidden; }
+        .year-block {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .year-header {
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
         
-        #log-console { flex: 1; background: #121215; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-        .log-entry { padding-bottom: 10px; border-bottom: 1px solid #1e1e24; font-size: 15px; line-height: 1.5; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .log-entry.success { color: var(--success); }
-        .log-entry.danger { color: var(--danger); }
-        .log-entry.warning { color: var(--warning); }
-        .log-entry.system-msg { color: #8e8e93; font-style: italic; }
-        .log-entry.event-msg { color: #bf5af2; font-weight: bold; }
+        .log-item {
+            font-size: 15px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
 
-        #tab-window { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; max-height: 40%; overflow-y: auto; }
-        #tab-window h3 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--accent); }
-        
-        .grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .item-card { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; }
-        .item-card button { background: var(--accent); color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .item-card button:hover { background: #0062cc; }
-        .item-card button.alt-btn { background: transparent; border: 1px solid var(--accent); }
+        /* Stat Bars Area */
+        #stat-container {
+            background: var(--header-bg);
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .stat-label { width: 80px; }
+        .stat-bar-bg {
+            flex: 1;
+            height: 14px;
+            background: #e5e5ea;
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+        .stat-fill {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.4s ease;
+        }
 
-        #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        #modal-card { background: var(--bg-surface); border: 1px solid var(--border-color); width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-        #modal-card h3 { margin-top: 0; color: var(--accent); font-size: 24px; text-align: center; }
-        #modal-content { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
-        #modal-actions { display: flex; flex-direction: column; gap: 10px; }
-        #modal-actions button { background: var(--panel-bg); color: white; border: 1px solid var(--border-color); padding: 14px; border-radius: 8px; text-align: left; cursor: pointer; font-size: 15px; font-weight: 500; transition: 0.1s; }
-        #modal-actions button:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.02); }
+        /* Bottom Navigation & Age Button */
+        #bottom-nav {
+            background: var(--header-bg);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px 10px 25px 10px;
+            border-top: 1px solid var(--border);
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #8e8e93;
+            cursor: pointer;
+        }
+        .nav-btn span { font-size: 11px; font-weight: 600; }
         
-        .hidden { display: none !important; }
+        #age-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(52, 199, 89, 0.4);
+            transition: transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #age-btn:active { transform: scale(0.95); }
+
+        /* Modals for Events / Menus */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-card {
+            background: white;
+            width: 85%;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-title { font-size: 20px; font-weight: bold; margin-top: 0; }
+        .modal-body { font-size: 16px; margin: 15px 0; line-height: 1.4; color: #333; }
+        .modal-options { display: flex; flex-direction: column; gap: 10px; }
+        .modal-btn {
+            background: #f2f2f7;
+            border: 1px solid #d1d1d6;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-btn:hover { background: #e5e5ea; }
+        .modal-btn.primary { background: var(--primary); color: white; border: none; }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <!-- Sidebar -->
-        <aside id="sidebar">
-            <header class="player-profile">
-                <div id="portrait-container"></div>
-                <h2 id="player-name">Generating...</h2>
-                <p id="player-meta">Age 0 • $0</p>
-            </header>
 
-            <section id="stats-panel" class="stat-grid"></section>
+    <div id="mobile-container">
+        <header>
+            <h1 id="player-name">Generating...</h1>
+            <p id="player-finances">Bank: $0</p>
+        </header>
 
-            <nav id="action-menu">
-                <button class="menu-btn" onclick="game.ui.switchTab('activities')">🎭 Activities</button>
-                <button class="menu-btn" onclick="game.ui.switchTab('jobs')">👔 Jobs & Ed</button>
-                <button class="menu-btn" onclick="game.ui.switchTab('assets')">💼 Assets & Market</button>
-                <button class="menu-btn" onclick="game.ui.switchTab('relationships')">👥 Relationships</button>
-                <button class="menu-btn" onclick="game.ui.switchTab('crime')" style="color: var(--danger); border-color: #552222;">⚖️ Crime</button>
-                <button class="menu-btn" onclick="game.system.saveGame()" style="color: var(--warning);">💾 Save Game</button>
-            </nav>
-            
-            <button id="btn-age-up" onclick="game.ageUp()">➕ AGE UP</button>
-        </aside>
+        <div id="life-log">
+            </div>
 
-        <!-- Main View -->
-        <main>
-            <div id="log-console"></div>
-            <section id="tab-window" class="hidden"></section>
-        </main>
-    </div>
+        <div id="stat-container">
+            <div class="stat-row">
+                <span class="stat-label">Happiness</span>
+                <div class="stat-bar-bg"><div class="stat-fill" id="stat-hap" style="background:var(--primary); width:100%"></div></div>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Health</span>
+                <div class="stat-bar-bg"><div class="stat-fill" id="stat-hea" style="background:var(--primary); width:100%"></div></div>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Smarts</span>
+                <div class="stat-bar-bg"><div class="stat-fill" id="stat-sma" style="background:var(--intel); width:100%"></div></div>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Looks</span>
+                <div class="stat-bar-bg"><div class="stat-fill" id="stat-loo" style="background:var(--warning); width:100%"></div></div>
+            </div>
+        </div>
 
-    <!-- Modals -->
-    <div id="modal-overlay" class="hidden">
-        <div id="modal-card">
-            <h3 id="modal-title">Event</h3>
-            <div id="modal-content"></div>
-            <div id="modal-actions"></div>
+        <nav id="bottom-nav">
+            <button class="nav-btn" onclick="ui.showWIP('Activities')">🎭<span>Activities</span></button>
+            <button class="nav-btn" onclick="ui.showWIP('Relationships')">👥<span>Relations</span></button>
+            <button id="age-btn" onclick="game.ageUp()">➕</button>
+            <button class="nav-btn" onclick="ui.showWIP('Occupation')">💼<span>Jobs</span></button>
+            <button class="nav-btn" onclick="ui.showWIP('Assets')">🏠<span>Assets</span></button>
+        </nav>
+
+        <div id="event-modal" class="modal-overlay">
+            <div class="modal-card">
+                <h2 id="modal-title" class="modal-title">Event</h2>
+                <div id="modal-body" class="modal-body">Text goes here.</div>
+                <div id="modal-options" class="modal-options"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        /** Utilities */
-        const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-        const rng = (max) => Math.floor(Math.random() * max);
-        const randItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-        /** Data Generators */
-        const Names = {
-            first: ["Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Sam", "Jamie", "Dakota", "Reese"],
-            last: ["Parody", "Musketeer", "Swift", "Zuck", "Bezos", "Gates", "Kardashian", "Ramsay", "Trumpet", "Biden"],
-            generate() { return `${randItem(this.first)} ${randItem(this.last)}`; }
+        // --- DATA & CONTENT GENERATORS ---
+        const firstNames = ["Taylor", "Jordan", "Casey", "Alex", "Morgan", "Riley", "Sam", "Jamie"];
+        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller"];
+        
+        // Age-specific random text databases
+        const eventsDB = {
+            infant: [
+                "🍼 You took your first steps!",
+                "🧸 You started playing with wooden blocks.",
+                "🗣️ You said your first word: 'Applesauce'.",
+                "🤢 You threw up all over your mother.",
+                "😭 You cried all night for absolutely no reason."
+            ],
+            child: [
+                "🎒 You started elementary school.",
+                "🖍️ You ate a green crayon.",
+                "🚲 You learned how to ride a bike.",
+                "🦷 You lost your first tooth.",
+                "🎮 You got highly addicted to a mobile game."
+            ],
+            teen: [
+                "🏫 You started high school.",
+                "💔 Your middle-school crush rejected you.",
+                "🚗 You started taking driving lessons.",
+                "📱 You spent 14 hours looking at social media.",
+                "🍕 You developed terrible acne."
+            ],
+            adult: [
+                "☕ You felt exhausted and drank three cups of coffee.",
+                "💼 You realized taxes are incredibly confusing.",
+                "🏋️ You considered going to the gym, but took a nap instead.",
+                "🛒 You went grocery shopping and forgot the one thing you needed.",
+                "📺 You binge-watched a 10-season show in one weekend."
+            ]
         };
 
-        /** Game State Engine */
-        class LifeState {
+        // Random interactive pop-up events
+        const randomPopups = [
+            {
+                ageMin: 5, ageMax: 12,
+                title: "Bully Encounter",
+                text: "A kid named Braden is demanding you give him your lunch money.",
+                options: [
+                    { text: "👊 Fight him", effect: () => { game.modStat('health', -10); game.modStat('happiness', 10); game.log("You fought Braden. You got a black eye, but kept your money."); } },
+                    { text: "💸 Give him the money", effect: () => { game.modStat('happiness', -20); game.log("You gave Braden your lunch money and went hungry."); } },
+                    { text: "🏃 Run away", effect: () => { game.log("You ran away safely."); } }
+                ]
+            },
+            {
+                ageMin: 18, ageMax: 100,
+                title: "Lost Wallet",
+                text: "You found a designer wallet on the street containing $400 in cash.",
+                options: [
+                    { text: "💰 Keep the cash", effect: () => { game.state.money += 400; game.modStat('happiness', 15); game.log("You pocketed the $400. Finders keepers!"); } },
+                    { text: "👮 Turn it into the police", effect: () => { game.modStat('happiness', 5); game.log("You did the right thing and turned the wallet in."); } }
+                ]
+            },
+            {
+                ageMin: 18, ageMax: 100,
+                title: "Bad Flu",
+                text: "You woke up with a high fever and a terrible cough.",
+                options: [
+                    { text: "🛏️ Stay in bed", effect: () => { game.modStat('health', -5); game.log("You rested and fought off the worst of the flu."); } },
+                    { text: "💊 Go to the doctor ($50)", effect: () => { 
+                        if(game.state.money >= 50) { game.state.money -= 50; game.modStat('health', 10); game.log("The doctor gave you antibiotics."); }
+                        else { game.modStat('health', -15); game.log("You couldn't afford the doctor and got much sicker."); }
+                    }}
+                ]
+            }
+        ];
+
+        // --- CORE GAME ENGINE ---
+        class GameEngine {
             constructor() {
-                this.generateNewLife();
-            }
-            generateNewLife() {
-                this.player = {
-                    name: Names.generate(),
+                this.state = {
+                    name: `${firstNames[Math.floor(Math.random()*firstNames.length)]} ${lastNames[Math.floor(Math.random()*lastNames.length)]}`,
                     age: 0,
-                    bankBalance: 0,
-                    income: 0,
-                    jobTitle: "Unemployed",
-                    isImprisoned: false,
-                    prisonYearsLeft: 0,
-                    cosmetics: { glasses: false, chain: false, hat: false },
-                    stats: { health: 80 + rng(20), happiness: 80 + rng(20), smarts: 40 + rng(60), looks: 40 + rng(60), craziness: rng(100), charisma: 30 + rng(70), fame: 0, karma: 50 },
-                    assets: { properties: [], vehicles: [], pets: [] },
-                    relationships: [
-                        { name: Names.generate(), type: "Mother", relationship: 80 + rng(20), age: 25 + rng(15), craziness: rng(100) },
-                        { name: Names.generate(), type: "Father", relationship: 80 + rng(20), age: 25 + rng(15), craziness: rng(100) }
-                    ]
+                    money: 0,
+                    stats: {
+                        hap: 70 + Math.floor(Math.random() * 30),
+                        hea: 80 + Math.floor(Math.random() * 20),
+                        sma: 20 + Math.floor(Math.random() * 80),
+                        loo: 20 + Math.floor(Math.random() * 80)
+                    },
+                    currentYearLog: []
                 };
-                this.market = { realEstate: [], vehicles: [], pets: [] };
-                this.generateMarket();
             }
-            generateMarket() {
-                const houseTypes = [{n:"Trailer",p:15000,r:300},{n:"Apartment",p:80000,r:1200},{n:"Suburban House",p:250000,r:2500},{n:"Mansion",p:1500000,r:10000}];
-                this.market.realEstate = [randItem(houseTypes), randItem(houseTypes)].map(h => ({ name: h.n, price: h.p + rng(h.p*0.2), rent: h.r, tenant: null, condition: 100 }));
-                this.market.vehicles = [{name: "Used Sedan", price: 4000}, {name: "Sports Car", price: 65000}, {name: "Hypercar", price: 2500000}];
-            }
-        }
 
-        /** Visual Portrait Engine */
-        class PortraitEngine {
-            render(player) {
-                const container = document.getElementById("portrait-container");
-                const isOld = player.age >= 60;
-                const skin = isOld ? "#d8b498" : "#f1c27d";
-                const hair = isOld ? "#e0e0e0" : "#2c1e16";
+            init() {
+                document.getElementById('player-name').innerText = this.state.name;
+                this.updateUI();
                 
-                // Eyes base on health/craziness
-                let eyes = `<ellipse cx="40" cy="45" rx="5" ry="5" fill="#111"/><ellipse cx="60" cy="45" rx="5" ry="5" fill="#111"/>`;
-                if(player.stats.health < 30) eyes = `<path d="M35 45 L45 45 M55 45 L65 45" stroke="#111" stroke-width="3"/>`;
-                if(player.stats.craziness > 80) eyes = `<circle cx="40" cy="45" r="6" fill="#fff" stroke="#111"/><circle cx="40" cy="45" r="2" fill="#111"/><circle cx="60" cy="45" r="6" fill="#fff" stroke="#111"/><circle cx="60" cy="45" r="2" fill="#111"/>`;
-
-                // Mouth based on happiness
-                let controlY = player.stats.happiness > 60 ? 85 : (player.stats.happiness < 30 ? 55 : 70);
-                let mouth = `<path d="M 35 70 Q 50 ${controlY} 65 70" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round"/>`;
-
-                // Prison Jumpsuit vs Normal
-                let clothing = player.isImprisoned ? `<path d="M 20 100 Q 50 80 80 100" fill="#ff9500"/>` : `<path d="M 20 100 Q 50 80 80 100" fill="#444"/>`;
-
-                // Cosmetics
-                let accessories = "";
-                if(player.cosmetics.glasses) accessories += `<circle cx="40" cy="45" r="10" fill="rgba(0,0,0,0.5)" stroke="#111" stroke-width="2"/><circle cx="60" cy="45" r="10" fill="rgba(0,0,0,0.5)" stroke="#111" stroke-width="2"/><line x1="50" y1="45" x2="50" y2="45" stroke="#111" stroke-width="2"/>`;
-                if(player.cosmetics.chain) accessories += `<path d="M 35 85 Q 50 100 65 85" fill="none" stroke="#ffd60a" stroke-width="4"/>`;
-
-                let svg = `
-                    <svg viewBox="0 0 100 100" width="100%" height="100%">
-                        <rect width="100%" height="100%" fill="${player.isImprisoned ? '#555' : '#1e1e24'}"/>
-                        ${clothing}
-                        <circle cx="50" cy="55" r="28" fill="${skin}"/>
-                        ${isOld ? `<path d="M30 30 Q50 25 70 30 M35 35 Q50 32 65 35" fill="none" stroke="#ba967a" stroke-width="1.5"/>` : ''}
-                        ${eyes}
-                        ${mouth}
-                        <path d="M 20 40 Q 50 15 80 40 Q 50 30 20 40" fill="${hair}"/>
-                        ${accessories}
-                    </svg>`;
-                container.innerHTML = svg;
-            }
-        }
-
-        /** UI Manager */
-        class UIManager {
-            constructor(game) { this.game = game; }
-            
-            log(msg, type = "system-msg") {
-                const c = document.getElementById("log-console");
-                const div = document.createElement("div");
-                div.className = `log-entry ${type}`;
-                div.innerHTML = `[Age ${this.game.state.player.age}] ${msg}`;
-                c.prepend(div);
+                // Starting log
+                this.log(`👶 You were born in a hospital.`);
+                this.log(`🧬 You are a male.`);
+                this.log(`👩‍👦 Your mother is 28 years old.`);
+                this.renderYearBlock();
             }
 
-            modal(title, html, actions) {
-                document.getElementById("modal-title").innerText = title;
-                document.getElementById("modal-content").innerHTML = html;
-                const ac = document.getElementById("modal-actions");
-                ac.innerHTML = "";
-                actions.forEach(a => {
-                    const b = document.createElement("button");
-                    b.innerText = a.text;
-                    b.onclick = () => { a.fn(); if(a.close !== false) this.closeModal(); this.game.updateUI(); };
-                    ac.appendChild(b);
-                });
-                document.getElementById("modal-overlay").classList.remove("hidden");
-            }
-            closeModal() { document.getElementById("modal-overlay").classList.add("hidden"); }
-
-            switchTab(tab) {
-                const win = document.getElementById("tab-window");
-                const p = this.game.state.player;
-                win.classList.remove("hidden");
+            updateUI() {
+                document.getElementById('player-finances').innerText = `Bank: $${this.state.money.toLocaleString()}`;
                 
-                if (p.isImprisoned && tab !== 'activities') {
-                    win.innerHTML = `<h3 style="color:var(--danger)">LOCKDOWN</h3><p>You are in prison. Most actions are restricted.</p>`;
-                    return;
-                }
-
-                if (tab === 'activities') {
-                    if (p.isImprisoned) {
-                        win.innerHTML = `<h3>Prison Yard</h3>
-                        <div class="grid-list">
-                            <div class="item-card"><h4>Work out</h4><button onclick="game.systems.activities.gym()">Lift Weights</button></div>
-                            <div class="item-card"><h4>Library</h4><button onclick="game.systems.activities.library()">Read Books</button></div>
-                            <div class="item-card"><h4>Escape</h4><button onclick="game.systems.crime.attemptEscape()" style="background:var(--danger)">Start Riot & Run</button></div>
-                        </div>`;
-                    } else {
-                        win.innerHTML = `<h3>Activities</h3>
-                        <div class="grid-list">
-                            <div class="item-card"><h4>Gym ($10)</h4><button onclick="game.systems.activities.gym()">Work Out</button></div>
-                            <div class="item-card"><h4>Library (Free)</h4><button onclick="game.systems.activities.library()">Read Books</button></div>
-                            <div class="item-card"><h4>Doctor ($100)</h4><button onclick="game.systems.activities.doctor()">Checkup</button></div>
-                            <div class="item-card"><h4>Therapy ($150)</h4><button onclick="game.systems.activities.therapy()">Counseling</button></div>
-                            <div class="item-card"><h4>Plastic Surgery ($5000)</h4><button onclick="game.systems.activities.surgery()">Enhance Looks</button></div>
-                        </div>`;
-                    }
-                } else if (tab === 'assets') {
-                    let html = `<h3>Marketplace & Assets</h3><h4>Your Real Estate</h4><div class="grid-list">`;
-                    if(p.assets.properties.length === 0) html += `<p>No properties owned.</p>`;
-                    p.assets.properties.forEach((prop, i) => {
-                        html += `<div class="item-card">
-                            <strong>${prop.name}</strong><br>Value: $${prop.price}<br>Cond: ${prop.condition}%
-                            ${prop.tenant ? `<span style="color:var(--success)">Rented: $${prop.rent}/mo to ${prop.tenant.name}</span>` : `<button onclick="game.systems.assets.listRent(${i})">Find Tenant ($${prop.rent}/mo)</button>`}
-                            <button class="alt-btn" onclick="game.systems.assets.sellProperty(${i})">Sell Property</button>
-                        </div>`;
-                    });
-                    html += `</div><h4>Buy Real Estate</h4><div class="grid-list">`;
-                    this.game.state.market.realEstate.forEach((prop, i) => {
-                        html += `<div class="item-card"><strong>${prop.name}</strong><br>$${prop.price}<br><button onclick="game.systems.assets.buyProperty(${i})">Buy</button></div>`;
-                    });
-                    html += `</div><h4>Luxury Cosmetics</h4><div class="grid-list">
-                        <div class="item-card"><strong>Designer Glasses</strong><br>$500<button onclick="game.systems.assets.buyCosmetic('glasses', 500)">Buy</button></div>
-                        <div class="item-card"><strong>Gold Chain</strong><br>$2500<button onclick="game.systems.assets.buyCosmetic('chain', 2500)">Buy</button></div>
-                    </div>`;
-                    win.innerHTML = html;
-                } else if (tab === 'jobs') {
-                    win.innerHTML = `<h3>Careers</h3><p>Current: <strong>${p.jobTitle}</strong> ($${p.income}/yr)</p>
-                    <div class="grid-list">
-                        <div class="item-card"><h4>Fast Food</h4>$15,000/yr<button onclick="game.systems.jobs.apply('Fast Food Worker', 15000, 0)">Apply</button></div>
-                        <div class="item-card"><h4>Office Clerk</h4>$35,000/yr (Req: 40 Smarts)<button onclick="game.systems.jobs.apply('Office Clerk', 35000, 40)">Apply</button></div>
-                        <div class="item-card"><h4>App Developer</h4>$85,000/yr (Req: 75 Smarts)<button onclick="game.systems.jobs.apply('Software Dev', 85000, 75)">Apply</button></div>
-                        <div class="item-card"><h4>Actor</h4>$200,000/yr (Req: 80 Looks, 60 Charisma)<button onclick="game.systems.jobs.apply('Actor', 200000, 0, 80)">Apply</button></div>
-                    </div>`;
-                } else if (tab === 'relationships') {
-                    let html = `<h3>Family & Friends</h3><div class="grid-list">`;
-                    p.relationships.forEach((rel, i) => {
-                        html += `<div class="item-card">
-                            <strong>${rel.name} (${rel.type})</strong><br>Age: ${rel.age}<br>Relationship: ${rel.relationship}%
-                            <button onclick="game.systems.relations.interact(${i}, 'spend_time')">Spend Time</button>
-                            <button onclick="game.systems.relations.interact(${i}, 'ask_money')">Ask for Money</button>
-                        </div>`;
-                    });
-                    win.innerHTML = html + `</div>`;
-                } else if (tab === 'crime') {
-                    win.innerHTML = `<h3>Underworld</h3>
-                    <div class="grid-list">
-                        <div class="item-card"><h4>Pickpocket</h4>Low Risk, Low Reward<button onclick="game.systems.crime.commit('pickpocket', 20, 300, 1)">Execute</button></div>
-                        <div class="item-card"><h4>Grand Theft Auto</h4>Med Risk, Med Reward<button onclick="game.systems.crime.commit('gta', 50, 8000, 3)">Execute</button></div>
-                        <div class="item-card"><h4>Bank Heist</h4>High Risk, High Reward<button onclick="game.systems.crime.commit('bank', 85, 150000, 10)">Execute</button></div>
-                    </div>`;
-                }
-            }
-
-            renderStats() {
-                const p = this.game.state.player;
-                const panel = document.getElementById("stats-panel");
-                panel.innerHTML = "";
-                
-                const getCol = (val) => val > 70 ? 'var(--success)' : (val > 30 ? 'var(--warning)' : 'var(--danger)');
-                
-                ['health', 'happiness', 'smarts', 'looks', 'craziness', 'charisma', 'fame', 'karma'].forEach(stat => {
-                    const val = p.stats[stat];
-                    panel.innerHTML += `
-                        <div class="stat-group">
-                            <label style="text-transform:capitalize">${stat}</label>
-                            <div class="progress-bar"><div class="fill" style="width:${val}%; background:${getCol(val)}"></div></div>
-                        </div>`;
-                });
-                
-                document.getElementById("player-name").innerText = p.name;
-                document.getElementById("player-meta").innerText = `Age ${p.age} • $${p.bankBalance.toLocaleString()} • ${p.jobTitle}`;
-                
-                const ageBtn = document.getElementById("btn-age-up");
-                if (p.isImprisoned) {
-                    ageBtn.innerText = `SERVE TIME (${p.prisonYearsLeft} YRS)`;
-                    ageBtn.style.background = "var(--danger)";
-                } else {
-                    ageBtn.innerText = `➕ AGE UP`;
-                    ageBtn.style.background = "var(--success)";
-                }
-
-                if(p.stats.health <= 0) {
-                    ageBtn.disabled = true;
-                    this.modal("You Died!", `<p>Your life has ended at age ${p.age}. Net Worth: $${p.bankBalance.toLocaleString()}.</p>`, [
-                        { text: "Start Next Generation (Inherit 80%)", fn: () => this.game.system.reincarnate() },
-                        { text: "Start Brand New Life", fn: () => { localStorage.clear(); location.reload(); } }
-                    ]);
-                }
-            }
-        }
-
-        /** Modular Game Systems */
-        class GameSystems {
-            constructor(game) { this.game = game; this.p = game.state.player; }
-            
-            modStat(stat, amount) {
-                this.p.stats[stat] = clamp(this.p.stats[stat] + amount, 0, 100);
-            }
-
-            activities = {
-                gym: () => {
-                    if (this.p.bankBalance >= 10 || this.p.isImprisoned) {
-                        if(!this.p.isImprisoned) this.p.bankBalance -= 10;
-                        this.game.systems.modStat('health', rng(5)+2);
-                        this.game.systems.modStat('looks', rng(3));
-                        this.game.ui.log("You had a great workout.", "success");
-                    } else this.game.ui.log("Not enough money for the gym.", "danger");
-                    this.game.updateUI();
-                },
-                library: () => {
-                    this.game.systems.modStat('smarts', rng(5)+1);
-                    this.game.ui.log("You read a book and feel slightly smarter.", "success");
-                    this.game.updateUI();
-                },
-                doctor: () => {
-                    if (this.p.bankBalance >= 100) {
-                        this.p.bankBalance -= 100;
-                        if(this.p.stats.health < 80) { this.game.systems.modStat('health', 20); this.game.ui.log("The doctor cured your ailments.", "success"); }
-                        else this.game.ui.log("The doctor said you are perfectly healthy.");
-                    } else this.game.ui.log("Can't afford the doctor.", "danger");
-                    this.game.updateUI();
-                },
-                therapy: () => {
-                    if (this.p.bankBalance >= 150) {
-                        this.p.bankBalance -= 150;
-                        this.game.systems.modStat('happiness', 20);
-                        this.game.systems.modStat('craziness', -15);
-                        this.game.ui.log("Therapy helped you process your emotions.", "success");
-                    } else this.game.ui.log("Can't afford therapy.", "danger");
-                    this.game.updateUI();
-                },
-                surgery: () => {
-                    if (this.p.bankBalance >= 5000) {
-                        this.p.bankBalance -= 5000;
-                        if (rng(100) > 15) { this.game.systems.modStat('looks', 30); this.game.ui.log("The surgery was a massive success!", "success"); }
-                        else { this.game.systems.modStat('looks', -40); this.game.systems.modStat('health', -20); this.game.ui.log("BOTCHED SURGERY! You look horrific.", "danger"); }
-                    } else this.game.ui.log("Can't afford surgery.", "danger");
-                    this.game.updateUI();
-                }
-            };
-
-            jobs = {
-                apply: (title, pay, reqSmarts = 0, reqLooks = 0) => {
-                    if(this.p.age < 16) { this.game.ui.log("You are too young to work.", "danger"); return; }
-                    if(this.p.stats.smarts < reqSmarts || this.p.stats.looks < reqLooks) {
-                        this.game.ui.log(`Rejected! You don't meet the requirements for ${title}.`, "danger");
-                    } else {
-                        this.p.jobTitle = title;
-                        this.p.income = pay;
-                        this.game.ui.log(`Hired! You are now a ${title}.`, "success");
-                    }
-                    this.game.ui.switchTab('jobs');
-                    this.game.updateUI();
-                }
-            };
-
-            assets = {
-                buyProperty: (index) => {
-                    const prop = this.game.state.market.realEstate[index];
-                    if (this.p.bankBalance >= prop.price) {
-                        this.p.bankBalance -= prop.price;
-                        this.p.assets.properties.push({...prop});
-                        this.game.state.market.realEstate.splice(index, 1);
-                        this.game.ui.log(`You bought a ${prop.name}!`, "success");
-                        this.game.state.generateMarket(); // Refresh market
-                    } else this.game.ui.log("Insufficient funds.", "danger");
-                    this.game.ui.switchTab('assets');
-                    this.game.updateUI();
-                },
-                sellProperty: (index) => {
-                    const prop = this.p.assets.properties[index];
-                    this.p.bankBalance += prop.price;
-                    this.p.assets.properties.splice(index, 1);
-                    this.game.ui.log(`Sold ${prop.name} for $${prop.price}.`, "success");
-                    this.game.ui.switchTab('assets');
-                    this.game.updateUI();
-                },
-                listRent: (index) => {
-                    const prop = this.p.assets.properties[index];
-                    const tenant = { name: Names.generate(), craziness: rng(100) };
-                    this.game.ui.modal("Tenant Application", `<b>${tenant.name}</b> wants to rent your ${prop.name}.<br>They seem ${tenant.craziness > 70 ? 'very erratic' : 'normal'}.`, [
-                        { text: "Accept Tenant", fn: () => { prop.tenant = tenant; this.game.ui.log(`Leased to ${tenant.name}.`); this.game.ui.switchTab('assets'); } },
-                        { text: "Reject", fn: () => {} }
-                    ]);
-                },
-                buyCosmetic: (type, price) => {
-                    if (this.p.bankBalance >= price && !this.p.cosmetics[type]) {
-                        this.p.bankBalance -= price;
-                        this.p.cosmetics[type] = true;
-                        this.game.ui.log("Purchased cosmetic!", "success");
-                    }
-                    this.game.updateUI();
-                }
-            };
-
-            relations = {
-                interact: (index, action) => {
-                    const rel = this.p.relationships[index];
-                    if (action === 'spend_time') {
-                        rel.relationship = clamp(rel.relationship + rng(10), 0, 100);
-                        this.game.systems.modStat('happiness', 5);
-                        this.game.ui.log(`You spent time with your ${rel.type}.`);
-                    } else if (action === 'ask_money') {
-                        if (rel.relationship > 60 && rng(100) > 40) {
-                            let amt = rng(500) + 50;
-                            this.p.bankBalance += amt;
-                            rel.relationship -= 10;
-                            this.game.ui.log(`${rel.name} gave you $${amt}.`, "success");
-                        } else {
-                            rel.relationship -= 20;
-                            this.game.ui.log(`${rel.name} refused to give you money and got annoyed.`, "danger");
-                        }
-                    }
-                    this.game.ui.switchTab('relationships');
-                    this.game.updateUI();
-                }
-            };
-
-            crime = {
-                commit: (type, catchChance, reward, sentence) => {
-                    if (this.p.age < 10) { this.game.ui.log("Too young for major crimes."); return; }
+                ['hap', 'hea', 'sma', 'loo'].forEach(stat => {
+                    const val = this.state.stats[stat];
+                    const bar = document.getElementById(`stat-${stat}`);
+                    bar.style.width = `${val}%`;
                     
-                    let caught = rng(100) < (catchChance - (this.p.stats.smarts * 0.2)); // Smarts reduces catch rate
-                    if (caught) {
-                        this.game.ui.modal("BUSTED!", `The police caught you.`, [
-                            { text: "Hire Lawyer & Go to Court ($5000)", fn: () => this.game.systems.crime.court(sentence, true) },
-                            { text: "Use Public Defender", fn: () => this.game.systems.crime.court(sentence, false) },
-                            { text: "Bribe Police ($10000)", fn: () => {
-                                if(this.p.bankBalance >= 10000) {
-                                    this.p.bankBalance -= 10000;
-                                    if(rng(100)>50) { this.game.ui.log("Bribe accepted. You walked free.", "success"); }
-                                    else { this.game.ui.log("Officer insulted! Sentence doubled.", "danger"); this.game.systems.crime.imprison(sentence*2); }
-                                } else { this.game.ui.log("Can't afford bribe!"); this.game.systems.crime.imprison(sentence); }
-                            }}
-                        ]);
-                    } else {
-                        this.p.bankBalance += reward;
-                        this.game.systems.modStat('karma', -10);
-                        this.game.ui.log(`Crime successful! You got away with $${reward}.`, "success");
-                    }
-                    this.game.updateUI();
-                },
-                court: (sentence, hasLawyer) => {
-                    let winChance = this.p.stats.charisma * 0.4 + (hasLawyer ? 40 : 10);
-                    if (this.p.bankBalance < 5000 && hasLawyer) { this.game.ui.log("Couldn't afford lawyer!"); winChance -= 40; }
-                    if (hasLawyer && this.p.bankBalance >= 5000) this.p.bankBalance -= 5000;
-
-                    if (rng(100) < winChance) {
-                        this.game.ui.log("Not Guilty! You won the court case.", "success");
-                    } else {
-                        this.game.systems.crime.imprison(sentence);
-                    }
-                },
-                imprison: (years) => {
-                    this.p.isImprisoned = true;
-                    this.p.prisonYearsLeft = years;
-                    this.p.jobTitle = "Inmate";
-                    this.p.income = 0;
-                    this.game.systems.modStat('happiness', -50);
-                    this.game.ui.log(`Sentenced to ${years} years in prison.`, "danger");
-                    document.getElementById("tab-window").classList.add("hidden");
-                    this.game.updateUI();
-                },
-                attemptEscape: () => {
-                    let escapeChance = this.p.stats.smarts * 0.4 + this.p.stats.karma * 0.2;
-                    if (rng(100) < escapeChance) {
-                        this.p.isImprisoned = false;
-                        this.p.prisonYearsLeft = 0;
-                        this.game.ui.log("ESCAPE SUCCESSFUL! You broke out of prison.", "success");
-                        this.game.ui.switchTab('activities');
-                    } else {
-                        this.p.prisonYearsLeft += 5;
-                        this.game.systems.modStat('health', -30);
-                        this.game.ui.log("Escape failed. Guards beat you. 5 years added to sentence.", "danger");
-                    }
-                    this.game.updateUI();
-                }
-            };
-
-            triggerRandomEvent() {
-                const events = [
-                    { title: "Celebrity Encounter", txt: "You saw Elon Musketeer arguing with a barista.", 
-                      opts: [{t:"Take a Selfie", f:()=>{this.game.systems.modStat('fame', 15); this.game.ui.log("The selfie went viral! Fame +15");}}, 
-                             {t:"Ignore him", f:()=>{this.game.systems.modStat('smarts', 5);}}] },
-                    { title: "Stock Market Boom", txt: "The global economy is surging. Property values increased!", 
-                      opts: [{t:"Awesome", f:()=>{ this.p.assets.properties.forEach(p => p.price = Math.floor(p.price * 1.2)); this.game.ui.log("Your property values went up 20%!", "success"); }}] },
-                    { title: "Sick!", txt: "You caught a nasty flu going around.", 
-                      opts: [{t:"Rest", f:()=>{this.game.systems.modStat('health', -15); this.game.ui.log("You feel terrible. Health decreased.");}}] },
-                    { title: "Found Wallet", txt: "You found a wallet on the ground with $500.",
-                      opts: [{t:"Keep it", f:()=>{this.p.bankBalance += 500; this.game.systems.modStat('karma', -10); this.game.ui.log("Kept the money.");}},
-                             {t:"Turn it in", f:()=>{this.game.systems.modStat('karma', 20); this.game.ui.log("Turned it in. Karma increased.");}}] }
-                ];
-                let ev = randItem(events);
-                this.game.ui.modal(ev.title, ev.txt, ev.opts.map(o => ({text: o.t, fn: o.f})));
+                    // Color changing based on value
+                    if(val < 30) bar.style.background = 'var(--danger)';
+                    else if (val < 60) bar.style.background = 'var(--warning)';
+                    else if (stat === 'sma') bar.style.background = 'var(--intel)';
+                    else bar.style.background = 'var(--primary)';
+                });
             }
 
-            saveGame() {
-                localStorage.setItem('OpenLifeSave', JSON.stringify(this.game.state));
-                this.game.ui.log("Game Saved to Browser LocalStorage.", "system-msg");
+            modStat(stat, amount) {
+                this.state.stats[stat] = Math.max(0, Math.min(100, this.state.stats[stat] + amount));
             }
-            loadGame() {
-                let saved = localStorage.getItem('OpenLifeSave');
-                if (saved) {
-                    this.game.state = JSON.parse(saved);
-                    // Re-bind complex objects if necessary, but JSON.parse handles most for this scope
-                    this.game.systems.p = this.game.state.player;
-                    this.game.ui.log("Loaded previous save.", "system-msg");
+
+            log(text) {
+                this.state.currentYearLog.push(text);
+            }
+
+            renderYearBlock() {
+                if (this.state.currentYearLog.length === 0) return;
+
+                const logContainer = document.getElementById('life-log');
+                const block = document.createElement('div');
+                block.className = 'year-block';
+                
+                const header = document.createElement('div');
+                header.className = 'year-header';
+                header.innerText = `Age ${this.state.age}`;
+                block.appendChild(header);
+
+                this.state.currentYearLog.forEach(txt => {
+                    const item = document.createElement('div');
+                    item.className = 'log-item';
+                    item.innerHTML = txt;
+                    block.appendChild(item);
+                });
+
+                logContainer.appendChild(block);
+                this.state.currentYearLog = []; // Reset for next year
+
+                // Auto-scroll to bottom
+                setTimeout(() => { logContainer.scrollTop = logContainer.scrollHeight; }, 50);
+            }
+
+            triggerRandomPopup() {
+                // Filter valid popups for current age
+                const validPopups = randomPopups.filter(p => this.state.age >= p.ageMin && this.state.age <= p.ageMax);
+                if (validPopups.length > 0 && Math.random() < 0.35) { // 35% chance of an interactive popup
+                    const popup = validPopups[Math.floor(Math.random() * validPopups.length)];
+                    ui.showModal(popup.title, popup.text, popup.options);
                     return true;
                 }
                 return false;
             }
-            reincarnate() {
-                let oldMoney = this.p.bankBalance;
-                this.game.state.generateNewLife();
-                this.game.state.player.bankBalance = Math.floor(oldMoney * 0.8); // Estate tax inheritance
-                this.game.systems.p = this.game.state.player;
-                this.saveGame();
-                this.game.ui.closeModal();
-                this.game.ui.log("You have been reborn into a new generation, inheriting a portion of past wealth.", "event-msg");
-                this.game.updateUI();
-            }
-        }
 
-        /** Main Game Loop orchestrator */
-        class Game {
-            constructor() {
-                this.state = new LifeState();
-                this.ui = new UIManager(this);
-                this.portrait = new PortraitEngine();
-                this.systems = new GameSystems(this);
-            }
+            generateBackgroundEvents() {
+                let category = "adult";
+                if (this.state.age < 4) category = "infant";
+                else if (this.state.age < 13) category = "child";
+                else if (this.state.age < 18) category = "teen";
 
-            init() {
-                if(!this.systems.loadGame()) {
-                    this.ui.log("Welcome to your life.", "event-msg");
+                // Pick 1 to 3 random flavor texts
+                const eventCount = 1 + Math.floor(Math.random() * 2);
+                for(let i=0; i<eventCount; i++) {
+                    const randomTxt = eventsDB[category][Math.floor(Math.random() * eventsDB[category].length)];
+                    this.log(randomTxt);
                 }
-                this.updateUI();
-            }
-
-            updateUI() {
-                this.ui.renderStats();
-                this.portrait.render(this.state.player);
             }
 
             ageUp() {
-                const p = this.state.player;
-                if(p.stats.health <= 0) return;
+                if(this.state.stats.hea <= 0) return; // Dead
 
-                p.age += 1;
+                this.state.age++;
                 
-                // Process Prison
-                if (p.isImprisoned) {
-                    p.prisonYearsLeft -= 1;
-                    if (p.prisonYearsLeft <= 0) {
-                        p.isImprisoned = false;
-                        this.ui.log("RELEASED! You have served your time.", "event-msg");
-                        this.ui.switchTab('activities');
-                    }
-                } else {
-                    // Normal Aging processing
-                    if (p.age >= 18) p.bankBalance += p.income; // Income
-                    
-                    // Tenants & Asset degradation
-                    p.assets.properties.forEach(prop => {
-                        if (prop.tenant) {
-                            p.bankBalance += prop.rent;
-                            if(prop.tenant.craziness > 80 && rng(100) > 70) {
-                                prop.condition -= 20;
-                                prop.price = Math.floor(prop.price * 0.9);
-                                this.ui.log(`Crazy tenant ${prop.tenant.name} trashed your ${prop.name}! Condition dropped.`, "danger");
-                            }
-                        }
-                    });
+                // Passive aging effects
+                if(this.state.age > 18) this.state.money += Math.floor(Math.random() * 500); // Random passive income
+                if(this.state.age > 50) this.modStat('hea', -Math.floor(Math.random() * 4)); // Health decline
+                
+                this.generateBackgroundEvents();
 
-                    // Natural decay
-                    if (p.age > 50) this.systems.modStat('health', -(rng(4)));
-                    if (p.age > 40) this.systems.modStat('looks', -(rng(3)));
-                    this.systems.modStat('happiness', -(rng(5)-2)); // drift
+                // Check for popups; if none, just render the block and update UI
+                if (!this.triggerRandomPopup()) {
+                    this.renderYearBlock();
+                    this.updateUI();
+                    this.checkDeath();
                 }
+            }
 
-                // Relationships age
-                p.relationships.forEach(r => r.age++);
-
-                this.ui.log(`You are now ${p.age} years old.`);
-
-                // Random Event Check
-                if (rng(100) > 65) this.systems.triggerRandomEvent();
-                else this.updateUI();
+            checkDeath() {
+                if (this.state.stats.hea <= 0 || this.state.age > 100 + Math.random()*15) {
+                    this.state.stats.hea = 0;
+                    this.updateUI();
+                    ui.showModal("💀 You Died", `You passed away at the age of ${this.state.age}.<br><br>Final Bank Balance: $${this.state.money.toLocaleString()}`, [
+                        { text: "🔄 Start New Life", effect: () => location.reload() }
+                    ]);
+                }
             }
         }
 
+        // --- UI MANAGER ---
+        const ui = {
+            showModal: (title, body, options) => {
+                document.getElementById('modal-title').innerHTML = title;
+                document.getElementById('modal-body').innerHTML = body;
+                
+                const optsContainer = document.getElementById('modal-options');
+                optsContainer.innerHTML = '';
+                
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'modal-btn';
+                    btn.innerHTML = opt.text;
+                    btn.onclick = () => {
+                        document.getElementById('event-modal').style.display = 'none';
+                        opt.effect();
+                        game.renderYearBlock();
+                        game.updateUI();
+                        game.checkDeath();
+                    };
+                    optsContainer.appendChild(btn);
+                });
+
+                document.getElementById('event-modal').style.display = 'flex';
+            },
+
+            showWIP: (menuName) => {
+                ui.showModal(`🚧 Work in Progress`, `The <b>${menuName}</b> menu is not yet fully implemented in this base engine block.`, [
+                    { text: "Close", effect: () => {} }
+                ]);
+            }
+        };
+
         // Boot
-        const game = new Game();
+        const game = new GameEngine();
         window.onload = () => game.init();
+
     </script>
 </body>
 </html>
